@@ -1,10 +1,11 @@
 {
     "version": 2,
-    "functions": {
-      "core/wsgi.py": {
-        "runtime": "@vercel/python"
+    "builds": [
+      {
+        "src": "core/wsgi.py",
+        "use": "@vercel/python@latest"
       }
-    },
+    ],
     "routes": [
       {
         "src": "/(.*)",
