@@ -2,15 +2,14 @@
     "version": 2,
     "builds": [
       {
-        "src": "votre_nom_de_projet/wsgi.py",
-        "use": "@vercel/python",
-        "config": { "maxLambdaSize": "15mb" }
+        "src": "TOTP_example/wsgi.py",
+        "use": "@vercel/python"
       }
     ],
     "routes": [
       {
         "src": "/(.*)",
-        "dest": "votre_nom_de_projet/wsgi.py"
+        "dest": "TOTP_example/wsgi.py"
       }
     ]
   }
