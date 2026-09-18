@@ -1,15 +1,14 @@
 {
     "version": 2,
-    "builds": [
-      {
-        "src": "TOTP_example/wsgi.py",
-        "use": "@vercel/python"
+    "functions": {
+      "core/wsgi.py": {
+        "runtime": "@vercel/python"
       }
-    ],
+    },
     "routes": [
       {
         "src": "/(.*)",
-        "dest": "TOTP_example/wsgi.py"
+        "dest": "core/wsgi.py"
       }
     ]
   }
