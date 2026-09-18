@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-6idlef8@l))_vw0m4ck9ayc+cw)ip*5^aal+0zq7mc^uc*01w^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.vercel.app', 'localhost', '0.0.0.0']
 
 AUTH_USER_MODEL = "authApp.UserModel"
 
@@ -49,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
 ]
 
 ROOT_URLCONF = 'core.urls'
