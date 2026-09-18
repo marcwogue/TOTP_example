@@ -3,3 +3,4 @@ Django==6.1.1
 PyOTP==2.10.0
 qrcode==8.2
 sqlparse==0.6.0
+whitenoise==6.12.0
