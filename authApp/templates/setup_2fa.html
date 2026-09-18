@@ -1,0 +1,164 @@
+{% extends 'dash_base.html' %}
+{% load static %}
+
+{% block title %}
+    Activer la 2FA — PyCon Cameroon
+{% endblock %}
+
+{% block page_title %}
+    Activer la 2FA
+{% endblock %}
+
+{% block content %}
+
+<div class="twofa">
+
+    <!-- =================================================
+         HEADER
+         ================================================= -->
+    <header class="twofa__header">
+        <span class="twofa__label">SÉCURITÉ DU COMPTE</span>
+
+        <h1 class="twofa__title">
+            Activer l'authentification à deux facteurs
+        </h1>
+
+        <p class="twofa__description">
+            Renforcez la sécurité de votre compte avec une application d'authentification comme Google Authenticator ou Microsoft Authenticator.
+        </p>
+    </header>
+
+
+    <!-- =================================================
+         SETUP CARD
+         ================================================= -->
+    <div class="twofa__card">
+
+        <!-- STEP 1 -->
+        <section class="twofa__step">
+            <div class="twofa__step-number flex-center">1</div>
+
+            <div class="twofa__step-content">
+                <h2 class="twofa__step-title">Scannez le QR code</h2>
+
+                <p class="twofa__step-description">
+                    Ouvrez votre application d'authentification et scannez le QR code ci-dessous.
+                </p>
+
+                <div class="twofa__qr flex-center">
+                    {{ qr_svg|safe }}
+                </div>
+
+                <div class="twofa__secret">
+                    <span class="twofa__secret-label">Impossible de scanner ?</span>
+                    <p class="twofa__secret-text">
+                        Entrez manuellement cette clé dans votre application :
+                    </p>
+                    <code class="twofa__secret-code">{{ formatted_secret }}</code>
+                </div>
+            </div>
+        </section>
+
+        <div class="twofa__divider"></div>
+
+        <!-- STEP 2 -->
+        <section class="twofa__step">
+            <div class="twofa__step-number flex-center">2</div>
+
+            <div class="twofa__step-content">
+                <h2 class="twofa__step-title">Entrez le code de vérification</h2>
+
+                <p class="twofa__step-description">
+                    Saisissez le code à 6 chiffres généré par votre application d'authentification.
+                </p>
+
+                <form method="POST" action="{% url 'setup_2fa' %}" class="twofa__form">
+                    {% csrf_token %}
+
+                    <div class="otp-group">
+                        {% for i in "123456" %}
+                            <input
+                                type="text"
+                                name="digit{{ i }}"
+                                maxlength="1"
+                                inputmode="numeric"
+                                pattern="[0-9]"
+                                autocomplete="one-time-code"
+                                class="otp-input"
+                                aria-label="Chiffre {{ i }}"
+                            >
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn--primary btn--full">
+                        Vérifier et activer la 2FA
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </div>
+
+
+    <!-- =================================================
+         INFORMATION
+         ================================================= -->
+    <div class="alert alert--info twofa__info">
+        <div class="twofa__info-icon icon-box flex-center">!</div>
+
+        <div class="twofa__info-content">
+            <strong>Important</strong>
+            <p>
+                Conservez votre clé secrète dans un endroit sûr. Elle peut être nécessaire pour récupérer l'accès à votre compte.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+const otpInputs = document.querySelectorAll('.otp-input');
+
+otpInputs.forEach((input, index) => {
+
+    input.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '');
+
+        if (input.value && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
+        }
+    });
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key === 'Backspace' && !input.value && index > 0) {
+            otpInputs[index - 1].focus();
+        }
+    });
+
+    input.addEventListener('paste', (event) => {
+        event.preventDefault();
+
+        const pasted = event.clipboardData
+            .getData('text')
+            .replace(/\D/g, '')
+            .slice(0, 6);
+
+        pasted.split('').forEach((digit, i) => {
+            if (otpInputs[i]) {
+                otpInputs[i].value = digit;
+            }
+        });
+
+        if (pasted.length > 0) {
+            const nextIndex = Math.min(pasted.length, otpInputs.length - 1);
+            otpInputs[nextIndex].focus();
+        }
+    });
+
+});
+</script>
+{% endblock %}

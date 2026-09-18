@@ -1,0 +1,292 @@
+{% extends 'dash_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  /* Stepper en haut */
+  .stepper-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .stepper-header .step-pill {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .stepper-header .step-pill.active {
+    background: #d4f4e2;
+    color: #0f7a55;
+  }
+  .stepper-header .arrow {
+    color: var(--text-light);
+  }
+
+  /* Cadre principal violet */
+  .totp-main-card {
+    background: #ffffff;
+    border: 2px solid #6b5ce7;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(107, 92, 231, 0.08);
+  }
+
+  /* Titre de Phase avec numéro */
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .phase-number {
+    width: 32px;
+    height: 32px;
+    background: #6b5ce7;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .phase-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #18264a;
+    text-transform: uppercase;
+  }
+
+  .divider-line {
+    height: 1px;
+    background: #e9eaf2;
+    margin-bottom: 25px;
+  }
+
+  /* Sub-cards encadrées */
+  .sub-card {
+    background: #f8f9fa;
+    border: 1.5px solid #2d3748;
+    border-radius: 6px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  .sub-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #1a202c;
+    margin-bottom: 8px;
+  }
+  .sub-card-desc {
+    font-size: 13px;
+    color: #718096;
+    margin-bottom: 16px;
+  }
+
+  /* Inputs stylisés */
+  .input-styled {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: monospace;
+    font-size: 14px;
+    color: #2d3748;
+    outline: none;
+  }
+
+  .btn-random {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #2d3748;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  .code-formula {
+    display: inline-block;
+    background: #ffffff;
+    border: 1.5px solid #6b5ce7;
+    color: #6b5ce7;
+    font-family: monospace;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  /* Responsive Grids */
+  .row-field {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 12px;
+  }
+  .row-label {
+    width: 120px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2d3748;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="twofa">
+
+    <!-- STEPPER DE NAVIGATION (3 PHASES) -->
+    <div class="stepper-header">
+        <div id="step-indicator-1" class="step-pill active" onclick="goToStep(1)">1. CONFIGURATION</div>
+        <span class="arrow">&rarr;</span>
+        <div id="step-indicator-2" class="step-pill" onclick="goToStep(2)">2. SIGNATURE HMAC</div>
+        <span class="arrow">&rarr;</span>
+        <div id="step-indicator-3" class="step-pill" onclick="goToStep(3)">3. TRONCATION</div>
+    </div>
+
+    <!-- CARDE PRINCIPALE (CADRE VIOLET) -->
+    <div class="totp-main-card">
+
+        <!-- ================= PHASE 1 ================= -->
+        <div id="step-card-1" class="step-card active-step">
+            <div class="phase-header">
+                <div class="phase-number">1</div>
+                <div class="phase-title">CONFIGURATION DES ENTRÉES (CLÉ SECRÈTE & PÉRIODE)</div>
+            </div>
+            <div class="divider-line"></div>
+
+            <!-- Clé Secrète Base32 -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 8px;">Clé Secrète (Base32)</label>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <input type="text" id="secret-input" class="input-styled" placeholder="EX: JBSWY3DPEHPK3PXP" value="JBSWY3DPEHPK3PXP" style="flex: 1;">
+                    <button class="btn-random" onclick="setRandomSecret()">Clé Aléatoire</button>
+                </div>
+                <span id="secret-error" style="color: var(--danger); font-size: 12px; display: none; margin-top: 5px;"></span>
+            </div>
+
+            <!-- Période -->
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 8px;">Période de rafraîchissement</label>
+                <div style="display: flex; gap: 20px; font-size: 14px; font-weight: 600; color: #2d3748;">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <input type="radio" name="period-radio" value="30" checked> 30 secondes (Défaut)
+                    </label>
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <input type="radio" name="period-radio" value="60"> 60 secondes
+                    </label>
+                </div>
+            </div>
+
+            <!-- Block 1: Décodage Base32 -->
+            <div class="sub-card">
+                <div class="sub-card-title">DÉCODAGE DE LA CLÉ BASE32 (PYTHON)</div>
+                <div class="sub-card-desc">L'algorithme TOTP requiert les octets bruts de la clé secrète. Nous interrogeons Python pour décoder votre clé Base32 en direct :</div>
+                
+                <div class="row-field">
+                    <span class="row-label">Octets (Hex) :</span>
+                    <div id="decode-hex" class="input-styled" style="flex: 1; background: #f8f9fa;">En attente...</div>
+                </div>
+                <div class="row-field" style="margin-bottom: 0;">
+                    <span class="row-label">Texte (ASCII) :</span>
+                    <div id="decode-ascii" class="input-styled" style="flex: 1; background: #f8f9fa;">En attente...</div>
+                </div>
+            </div>
+
+            <!-- Block 2: Pas de Temps -->
+            <div class="sub-card">
+                <div class="sub-card-title">INDEX DE PAS DE TEMPS ACTUEL ($T$)</div>
+                <div class="sub-card-desc">Le pas de temps actuel est le nombre d'intervalles écoulés depuis l'origine du temps Unix (1er Janvier 1970 00:00:00 UTC).</div>
+
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 13px; font-weight: 600; color: #2d3748;">Formule :</span>
+                            <span class="code-formula">T = floor(UnixTime / Période)</span>
+                        </div>
+                        <p style="font-size: 13px; color: #2d3748; margin-bottom: 6px;"><strong>Valeur T (Décimal) :</strong> <span id="step-decimal">-</span></p>
+                        <p style="font-size: 13px; color: #2d3748;"><strong>Valeur T (Hex 64-bit) :</strong> <span id="step-hex" style="color: #6b5ce7; font-weight: 700; font-family: monospace;">0x0000000000000000</span></p>
+                    </div>
+
+                    <!-- Timer Widget -->
+                    <div style="width: 200px; text-align: right;">
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #718096; margin-bottom: 4px;">PAS DE TEMPS</div>
+                        <div id="timer-label" style="font-size: 20px; font-weight: 800; color: #6b5ce7; margin-bottom: 6px;">30s</div>
+                        <div class="progress-bar-bg">
+                            <div id="timer-progress-bar" class="progress-bar-fill" style="background-color: #6b5ce7;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PHASE 2 ================= -->
+        <div id="step-card-2" class="step-card" style="display: none;">
+            <div class="phase-header">
+                <div class="phase-number">2</div>
+                <div class="phase-title">CALCUL DE LA SIGNATURE HMAC</div>
+            </div>
+            <div class="divider-line"></div>
+
+            <div class="sub-card">
+                <div class="sub-card-title">HMAC-SHA-1 ENTRÉES & SORTIES</div>
+                <div class="sub-card-desc">Combinaison de la clé secrète décodée et du pas de temps $T$ pour générer l'empreinte cryptographique.</div>
+                
+                <p style="font-size: 13px; margin-bottom: 8px;"><strong>Message Entrée (Temps Hex) :</strong> <code id="hmac-msg-input">0x00</code></p>
+                <p style="font-size: 13px; margin-bottom: 15px;"><strong>Clé Entrée (Octets Hex) :</strong> <code id="hmac-key-input">0x00</code></p>
+
+                <div class="sub-card-title" style="margin-top: 15px;">GRILLE DES OCTETS HACHÉS</div>
+                <div id="hmac-byte-grid" class="byte-grid"></div>
+            </div>
+        </div>
+
+        <!-- ================= PHASE 3 ================= -->
+        <div id="step-card-3" class="step-card" style="display: none;">
+            <div class="phase-header">
+                <div class="phase-number">3</div>
+                <div class="phase-title">TRONCATION DYNAMIQUE & OBTENTION DU CODE</div>
+            </div>
+            <div class="divider-line"></div>
+
+            <div class="sub-card">
+                <div class="sub-card-title">EXTRACTION DE L'ENTIER 31-BIT & MODULO</div>
+                <div class="sub-card-desc">Extraction des 4 octets pertinents à partir de l'offset du dernier octet.</div>
+
+                <p id="trunc-offset-calc" style="font-size: 13px; margin-bottom: 8px;">Offset = 0</p>
+                <p id="trunc-bytes-extracted" style="font-size: 13px; margin-bottom: 8px;">Octets extraits = []</p>
+                <p id="trunc-modulo-calc" style="font-size: 13px; margin-bottom: 15px;">Code Modulo = 000 000</p>
+
+                <div style="text-align: center; margin-top: 20px; padding: 20px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <span style="font-size: 12px; font-weight: 700; color: #718096; text-transform: uppercase;">CODE TOTP GÉNÉRÉ</span>
+                    <div id="otp-output-text" style="font-size: 36px; font-weight: 800; color: #6b5ce7; letter-spacing: 4px; margin-top: 5px;">------</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTROLES SUIVANT / PRÉCÉDENT -->
+        <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+            <button id="prev-step-btn" class="btn btn--secondary" onclick="navigatePrev()">&#8592; Précédent</button>
+            <button id="next-step-btn" class="btn btn--primary" onclick="navigateNext()" style="background: #6b5ce7;">Suivant &#8594;</button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/script.js' %}"></script>
+{% endblock %}

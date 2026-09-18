@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Vérification 2FA — PyCon Cameroon{% endblock %}
+
+{% block content %}
+<div class="auth-layout">
+    <div class="auth-content">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Vérification 2FA</h1>
+                <p>Entrez le code à 6 chiffres généré par votre application d'authentification.</p>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="code">Code de vérification</label>
+                    <input
+                        class ="verify"
+                        type="text"
+                        id="code"
+                        name="code"
+                        maxlength="6"
+                        minlength="6"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        placeholder="000000"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button type="submit" class="auth-button">Vérifier le code</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Utilisez votre application d'authentification pour obtenir le code.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

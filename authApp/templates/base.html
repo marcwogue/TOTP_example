@@ -1,0 +1,45 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {% block title %}Authentication{% endblock %}
+    </title>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <main class="auth-layout">
+
+        <section class="auth-content">
+
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message message-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
+
+        </section>
+
+    </main>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

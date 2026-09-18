@@ -1,0 +1,186 @@
+{% extends 'dash_base.html' %}
+{% load static %}
+
+{% block title %}
+    Dashboard — PyCon Cameroon
+{% endblock %}
+
+{% block content %}
+
+<!-- Welcome Banner -->
+<section class="card-welcome">
+    <div class="card-welcome__content">
+        <span class="card-welcome__label">BIENVENUE</span>
+
+        <h1 class="card-welcome__title">
+            Welcome to <span>PyCon Cameroon</span>
+        </h1>
+
+        <p class="card-welcome__text">
+            Ravi de vous revoir, <strong>{{ request.user.username }}</strong> !
+        </p>
+
+        <p class="card-welcome__desc">
+            Continuez à explorer, apprendre et construire avec la communauté Python du Cameroun.
+        </p>
+    </div>
+
+    <div class="card-welcome__visual">
+        <img src="{% static 'logo.jpeg' %}" alt="Logo PyCon Cameroon">
+    </div>
+</section>
+
+
+<!-- =====================================================
+     SECURITY STATUS
+     ===================================================== -->
+
+{% if request.user.is2fa %}
+
+<section class="card-security card-security--enabled">
+    <div class="card-security__icon icon-box">
+        <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3L20 6V11C20 16.2 16.8 20 12 21C7.2 20 4 16.2 4 11V6L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M8.5 12L11 14.5L15.5 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </div>
+
+    <div class="card-security__body">
+        <h3>Authentification à deux facteurs activée</h3>
+        <p>Votre compte est bien protégé. Vous avez activé la 2FA.</p>
+    </div>
+
+    <div class="card-security__check icon-box">
+        ✓
+    </div>
+
+    <button type="button" class="btn btn--outline-danger" onclick="openDisable2FAModal()">
+        Désactiver la 2FA
+    </button>
+</section>
+
+{% else %}
+
+<section class="card-security card-security--disabled">
+    <div class="card-security__icon icon-box">
+        <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3L20 6V11C20 16.2 16.8 20 12 21C7.2 20 4 16.2 4 11V6L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+    </div>
+
+    <div class="card-security__body">
+        <h3>Votre compte n'est pas protégé par la 2FA</h3>
+        <p>Activez l'authentification à deux facteurs pour renforcer la sécurité de votre compte.</p>
+    </div>
+
+    <a href="{% url 'setup_2fa' %}" class="btn btn--warning">
+        Activer la 2FA
+    </a>
+</section>
+
+{% endif %}
+
+
+<!-- =====================================================
+     DISABLE 2FA MODAL
+     ===================================================== -->
+
+{% if request.user.is2fa %}
+
+<div id="disable2FAModal" class="modal" aria-hidden="true">
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="disable2FATitle">
+        
+        <button type="button" class="modal__close flex-center" onclick="closeDisable2FAModal()" aria-label="Fermer">
+            &times;
+        </button>
+
+        <div class="modal__icon modal__icon--danger flex-center">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 3L20 6V11C20 16.2 16.8 20 12 21C7.2 20 4 16.2 4 11V6L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M12 8V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="12" cy="16.5" r="0.8" fill="currentColor"/>
+            </svg>
+        </div>
+
+        <div class="modal__header">
+            <h2 id="disable2FATitle">Désactiver la 2FA ?</h2>
+            <p>Cette action va supprimer la protection supplémentaire de votre compte.</p>
+        </div>
+
+        <form method="POST" action="{% url 'disable_2fa' %}" class="modal__form">
+            {% csrf_token %}
+
+            <label for="disable2FACode">Code d'authentification</label>
+            <input
+                id="disable2FACode"
+                type="text"
+                name="code"
+                class="otp-input otp-input--full"
+                maxlength="6"
+                minlength="6"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                placeholder="000000"
+                required
+            >
+
+            <p class="modal__help">
+                Entrez le code affiché dans votre application d'authentification.
+            </p>
+
+            <div class="modal__actions">
+                <button type="button" class="btn btn--secondary" onclick="closeDisable2FAModal()">
+                    Annuler
+                </button>
+                <button type="submit" class="btn btn--danger">
+                    Désactiver
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% endif %}
+
+
+<!-- =====================================================
+     SCRIPTS
+     ===================================================== -->
+
+<script>
+function openDisable2FAModal() {
+    const modal = document.getElementById("disable2FAModal");
+    if (!modal) return;
+
+    modal.classList.add("modal--visible");
+    modal.setAttribute("aria-hidden", "false");
+
+    const input = document.getElementById("disable2FACode");
+    if (input) {
+        setTimeout(() => input.focus(), 100);
+    }
+}
+
+function closeDisable2FAModal() {
+    const modal = document.getElementById("disable2FAModal");
+    if (!modal) return;
+
+    modal.classList.remove("modal--visible");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        closeDisable2FAModal();
+    }
+});
+
+document.getElementById("disable2FAModal")?.addEventListener("click", function (event) {
+    if (event.target === this) {
+        closeDisable2FAModal();
+    }
+});
+</script>
+
+{% endblock %}
