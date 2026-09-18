@@ -64,15 +64,15 @@ def login_view(request):
         user = authenticate(request, email=email, password=password)
         
         if user is not None:
-            if user.is2fa:
-                # Store the authenticated user's ID in session
-                request.session['pre_2fa_user_id'] = user.id
-                return redirect('verify_totp')
-            else:
+            # if user.is2fa:
+            #     # Store the authenticated user's ID in session
+            #     request.session['pre_2fa_user_id'] = user.id
+            #     return redirect('verify_totp')
+            # else:
                 # Log in fully and redirect to dashboard
-                auth_login(request, user)
-                messages.success(request, f"Bienvenue, {user.username} !")
-                return redirect('dashboard')
+            auth_login(request, user)
+            messages.success(request, f"Bienvenue, {user.username} !")
+            return redirect('dashboard')
         else:
             messages.error(request, "Email ou mot de passe incorrect.")
             
@@ -96,69 +96,6 @@ def dashboard_view(request):
         'recent_activity': recent_activity
     })
 
-
-@login_required(login_url="login")
-def setup_2fa (request):
-    user = request.user
-    if(user.is2fa):
-        messages.info(request,"votre 2fa est deja activéee")
-        return redirect('dashboard')
-
-    secret = request.session.get("temp_totp_secret")
-
-    if not secret:
-        secret = pyotp.random_base32()
-        request.session["temp_totp_secret"] = secret
-        request.session.save()
-
-    formated = ' '.join(secret[i:i+4] for i in range(0,len(secret),4))
-
-    otp_uri =pyotp.totp.TOTP(secret).provisioning_uri(
-        name= user.username,
-        issuer_name= 'Pycon 2026 TOTP' ,
-    )
-
-    factory = qrcode.image.svg.SvgPathImage
-    qr_image = qrcode.make(data=otp_uri, image_factory=factory)
-    stream = io.BytesIO()
-    qr_image.save(stream)
-    qr_svg = stream.getvalue().decode("utf-8")
-
-    svg_start = qr_svg.find("<svg")
-    if svg_start != -1:
-        qr_svg = qr_svg[svg_start:]
-        
-    if request.method == 'POST':
-        token = request.POST.get('token')
-        if not token:
-            digits = [request.POST.get(f'digit{i}', '') for i in range(1, 7)]
-            token = ''.join(digits)
-            
-        if not token or len(token) != 6 or not token.isdigit():
-            messages.error(request, "Veuillez entrer un code à 6 chiffres valide.")
-            return render(request, 'setup_2fa.html', {
-                'qr_svg': qr_svg,
-                'secret_key': secret,
-                'formatted_secret': formated
-            })
-            
-        totp = pyotp.TOTP(secret)
-        if totp.verify(token, valid_window=1):
-            user.totp_key = secret
-            user.is2fa = True
-            user.save()
-            if 'temp_totp_secret' in request.session:
-                del request.session['temp_totp_secret']
-            messages.success(request, "La double authentification (2FA) a été activée avec succès !")
-            return redirect('dashboard')
-        else:
-            messages.error(request, "Code de vérification invalide. Veuillez réessayer.")
-
-    return render(request, 'setup_2fa.html', {
-        'qr_svg': qr_svg,
-        'secret_key': secret,
-        'formatted_secret': formated
-    })
 
 
 @login_required(login_url="login")
@@ -199,38 +136,11 @@ def logout(request) :
     return redirect('login')
 
 def verify_totp (request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-    user_id = request.session.get('pre_2fa_user_id')
-    if not user_id:
-        messages.error(request, "Aucune session de connexion active. veuillez vous connecter d'abord")
-        return redirect('login')
-    try:
-        user = UserModel.objects.get(id=user_id)
-    except UserModel.DoesNotExist:
-        messages.error(request, "Utilisateur introuvable.")
-        return redirect('login')
+   pass
 
-    
-    if request.method == 'POST':
-        code = request.POST.get('code')
-        if not code or len(code) != 6 or not code.isdigit():
-            messages.error(request, "Veuillez entrer un code à 6 chiffres valide.")
-            return render(request, 'verify_totp.html', {'email': user.email})
-        totp = pyotp.TOTP(user.totp_key)
-        if totp.verify(code):
-            auth_login(request, user)
-            messages.success(request, "Connexion réussie !")
-            return redirect('dashboard')
-        else:
-            messages.error(request, "Code de vérification incorrect.")
-            return render(request, 'verify_totp.html', {
-                'user': user
-            })
-    return render(request, 'verify_totp.html', {
-        'user': user
-    })
-
+@login_required(login_url="login")
+def setup_2fa (request):
+    pass
 
 
 def totp_flow_view(request):
